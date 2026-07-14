@@ -19,6 +19,29 @@ echo "Kernel source:"
 pwd
 
 
+echo "Applying clang compatibility fixes"
+
+
+python3 <<'EOF'
+from pathlib import Path
+
+p = Path("kernel/locking/lockdep.c")
+
+if p.exists():
+    s = p.read_text()
+
+    old = "__lock_release(lock, nested, ip)"
+    new = "__lock_release(lock, 0, ip)"
+
+    if old in s:
+        s = s.replace(old, new)
+        p.write_text(s)
+        print("Applied lockdep clang fix")
+    else:
+        print("lockdep fix not needed")
+EOF
+
+
 mkdir -p out
 
 
@@ -35,6 +58,3 @@ make \
 
 
 echo "Defconfig completed"
-
-
-echo "Kernel configuration ready"
