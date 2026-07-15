@@ -1,0 +1,11 @@
+# OnePlus 8T kebab Stage1 vanilla kernel fragment
+# OPLUS vendor driver dependencies
+
+# OPLUS charger
+CONFIG_OPLUS_SM8250_CHARGER=y
+
+# OPLUS fingerprint
+CONFIG_OPLUS_FINGERPRINT=y
+
+# OPLUS touchpanel
+CONFIG_TOUCHPANEL_OPLUS=y
