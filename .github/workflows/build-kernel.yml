@@ -42,6 +42,26 @@ jobs:
           ./scripts/diagnose.sh
 
 
+      - name: Upload diagnose report (before build)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnose-report
+          path: |
+            diagnose_report.log
+          if-no-files-found: warn
+
+
+      - name: Upload kernel config (before build)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-config-before-build
+          path: |
+            kernel_source/out/.config
+          if-no-files-found: warn
+
+
       - name: Run build.sh
         run: |
           ./scripts/build.sh
@@ -57,21 +77,11 @@ jobs:
           if-no-files-found: warn
 
 
-      - name: Upload diagnose report (always)
+      - name: Upload kernel config (after build)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: diagnose-report
-          path: |
-            diagnose_report.log
-          if-no-files-found: warn
-
-
-      - name: Upload kernel config (always)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: kernel-config
+          name: kernel-config-after-build
           path: |
             kernel_source/out/.config
           if-no-files-found: warn
