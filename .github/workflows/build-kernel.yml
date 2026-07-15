@@ -31,6 +31,7 @@ jobs:
         profile:
           - ${{ github.event.inputs.profile || 'official' }}
 
+
     steps:
 
     - name: Checkout builder
@@ -73,36 +74,64 @@ jobs:
           kernel
 
 
-    - name: Patch defconfig
+    - name: Prepare kernel config
       run: |
         cd kernel
 
+        echo "========== Kernel source =========="
+        git rev-parse HEAD
+        git branch --show-current
+
+
+        echo "========== Cleaning kernel =========="
+
+        make mrproper || true
+
+        rm -rf out
+
         mkdir -p out
 
+
+        echo "========== Generate defconfig =========="
+
         make \
           O=out \
           ARCH=arm64 \
+          LLVM=1 \
+          LLVM_IAS=1 \
           vendor/kona_defconfig
 
-        echo "Disable incompatible schgm flash driver"
+
+        echo "========== Disable incompatible SCHGM drivers =========="
 
         scripts/config \
-          --disable CONFIG_QCOM_SCHGM
+          --disable CONFIG_QCOM_SCHGM || true
 
         scripts/config \
-          --disable CONFIG_QCOM_SCHGM_FLASH
+          --disable CONFIG_QCOM_SCHGM_FLASH || true
 
         scripts/config \
-          --disable CONFIG_SCHGM_FLASH
+          --disable CONFIG_SCHGM_FLASH || true
+
+
+        echo "========== Sync config =========="
 
         make \
           O=out \
           ARCH=arm64 \
+          LLVM=1 \
+          LLVM_IAS=1 \
           olddefconfig
 
 
         echo "========== SCHGM CONFIG =========="
+
         grep SCHGM out/.config || true
+
+
+        echo "========== CONFIG CREATED =========="
+
+        test -f out/.config
 
 
     - name: Build kernel
