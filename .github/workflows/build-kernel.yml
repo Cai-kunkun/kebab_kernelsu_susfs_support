@@ -31,6 +31,7 @@ jobs:
         profile:
           - ${{ github.event.inputs.profile || 'official' }}
 
+
     steps:
 
     - name: Checkout builder
@@ -73,20 +74,18 @@ jobs:
           kernel
 
 
-    - name: Clean kernel source
-      run: |
-        cd kernel
-
-        echo "Cleaning kernel tree"
-
-        make mrproper
-
-
-    - name: Patch defconfig
+    - name: Prepare kernel
       run: |
         cd kernel
 
         mkdir -p out
+
+        echo "== Clean source =="
+
+        make mrproper
+
+
+        echo "== Generate defconfig =="
 
         make \
           O=out \
@@ -94,7 +93,7 @@ jobs:
           vendor/kona_defconfig
 
 
-        echo "Disable incompatible schgm flash driver"
+        echo "== Disable incompatible SCHGM =="
 
         scripts/config \
           --disable CONFIG_QCOM_SCHGM || true
@@ -106,22 +105,22 @@ jobs:
           --disable CONFIG_SCHGM_FLASH || true
 
 
+        echo "== Sync config =="
+
         make \
           O=out \
           ARCH=arm64 \
           olddefconfig
 
 
-        echo "========== SCHGM CONFIG =========="
+        echo "========== CONFIG CHECK =========="
 
         grep SCHGM out/.config || true
-
 
 
     - name: Build kernel
       env:
         PROFILE: ${{ matrix.profile }}
-
       run: |
 
         chmod +x scripts/*.sh
@@ -129,12 +128,9 @@ jobs:
         ./scripts/build.sh
 
 
-
     - name: Upload kernel image
       uses: actions/upload-artifact@v4
-
       with:
         name: kebab-${{ matrix.profile }}
-
         path: |
-          kernel/out/arch/arm64/boot/Image.gz*
+          kernel/out/arch/arm64/boot/Image*
