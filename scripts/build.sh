@@ -39,6 +39,15 @@ if [ -f drivers/power/supply/qcom/Makefile ]; then
   sed -i '/schgm-flash\.o/d' drivers/power/supply/qcom/Makefile
 fi
 
+echo "=== 开启 CONFIG_OPLUS_SM8250_CHARGER ==="
+# 这个开关关着会导致 drivers/power/oplus/ 整个目录不编译,
+# 但别的文件(gpio/socinfo/usb-pd/i2c等)又无条件调用这个目录里定义的函数,
+# 导致最后链接阶段一大堆 undefined reference。打开它让这个目录参与编译。
+DEFCONFIG_FILE="arch/arm64/configs/${KERNEL_DEFCONFIG}"
+if ! grep -q "^CONFIG_OPLUS_SM8250_CHARGER=y" "${DEFCONFIG_FILE}"; then
+  echo "CONFIG_OPLUS_SM8250_CHARGER=y" >> "${DEFCONFIG_FILE}"
+fi
+
 echo "=== 生成 defconfig: ${KERNEL_DEFCONFIG} ${KERNEL_DEFCONFIG_FRAGMENTS} ===" 
 # 注意: CC/CROSS_COMPILE 必须在命令行显式传入,不能只靠 export!
 # 内核顶层 Makefile 里是 `CC = $(CROSS_COMPILE)gcc` 这种直接赋值,
