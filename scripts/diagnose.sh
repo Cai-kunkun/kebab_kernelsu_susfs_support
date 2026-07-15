@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# 诊断: 找出链接报错里的 oplus/qcom 私有符号定义位置以及对应 Makefile/Kconfig 开关
-# 用法: ./scripts/diagnose.sh
+# 诊断: 找出链接报错里的 oplus/qcom 私有符号定义位置、
+#       对应 Makefile/Kconfig 入口以及可能缺失的 CONFIG
+#
+# 用法:
+# ./scripts/diagnose.sh
 
 set -euo pipefail
 
@@ -26,7 +29,9 @@ echo "===================================================="
 
 
 echo
+echo "===================================================="
 echo "=== 生成 .config ==="
+
 
 make \
   O=out \
@@ -36,7 +41,8 @@ make \
   CROSS_COMPILE="${CROSS_COMPILE}" \
   CROSS_COMPILE_ARM32="${CROSS_COMPILE_ARM32}" \
   ${KERNEL_DEFCONFIG} ${KERNEL_DEFCONFIG_FRAGMENTS} \
-  > /dev/null 2>&1 || echo "(defconfig失败,继续诊断)"
+  > /dev/null 2>&1 || echo "(defconfig生成失败,继续诊断)"
+
 
 
 echo
@@ -56,6 +62,7 @@ declare -a SYMBOLS=(
 )
 
 
+
 for sym in "${SYMBOLS[@]}"; do
 
 echo
@@ -65,6 +72,7 @@ echo "----------------------------------------------------"
 
 
 echo "[函数定义]"
+
 grep -R \
   -n \
   -E "^[a-zA-Z_].*${sym}[[:space:]]*\(" \
@@ -74,8 +82,10 @@ grep -R \
   2>/dev/null || echo "未找到定义"
 
 
+
 echo
 echo "[EXPORT_SYMBOL]"
+
 grep -R \
   -n \
   "EXPORT_SYMBOL.*${sym}" \
@@ -84,18 +94,21 @@ grep -R \
   2>/dev/null || echo "未找到导出"
 
 
+
 echo
-echo "[所有引用]"
+echo "[引用位置]"
+
 grep -R \
   -n \
   "${sym}" \
   . \
   --include="*.c" \
   --include="*.h" \
-  2>/dev/null | head -20 || true
+  2>/dev/null | head -30 || true
 
 
 done
+
 
 
 
@@ -104,16 +117,18 @@ echo "===================================================="
 echo "=== Makefile/Kconfig 路径分析 ==="
 
 
+
 declare -A SYMBOL_DIR=(
-  ["get_project"]="drivers/power/oplus"
-  ["get_boot_mode"]="drivers/power/oplus"
-  ["get_eng_version"]="drivers/power/oplus"
+  ["get_project"]="drivers/soc/oplus"
+  ["get_boot_mode"]="drivers/soc/oplus"
+  ["get_eng_version"]="drivers/soc/oplus"
   ["oplus_gauge_init"]="drivers/power/oplus"
   ["switch_to_otg_mode"]="drivers/power/oplus"
-  ["msm_drm_notifier_call_chain"]="techpack/display/oplus"
-  ["switch_headset_state"]="sound"
+  ["msm_drm_notifier_call_chain"]="techpack/display"
+  ["switch_headset_state"]="drivers/input/touchscreen"
   ["opticalfp_irq_handler_register"]="drivers"
 )
+
 
 
 for sym in "${!SYMBOL_DIR[@]}"; do
@@ -168,7 +183,28 @@ while [ "${cur}" != "." ] && [ -n "${cur}" ]; do
 
 done
 
+
 done
+
+
+
+
+
+echo
+echo "===================================================="
+echo "=== 自动搜索相关 Kconfig ==="
+
+
+grep -R -n \
+  -E \
+  "OPLUS|OPPO|GAUGE|TOUCH|PROJECT|DISPLAY|NOTIFY|FINGERPRINT|CHARGER" \
+  --include="Kconfig" \
+  --include="Kconfig.*" \
+  . \
+  2>/dev/null \
+  | head -300 || true
+
+
 
 
 
@@ -176,12 +212,14 @@ echo
 echo "===================================================="
 echo "=== 当前 CONFIG 状态 ==="
 
+
 if [ -f out/.config ]; then
 
 grep -i \
-  -E "CONFIG_(OPLUS|OPPO|MSM|QCOM|DRM)" \
+  -E \
+  "CONFIG_(OPLUS|OPPO|MSM|QCOM|DRM|TOUCH|GAUGE)" \
   out/.config \
-  | head -120
+  | head -150
 
 else
 
@@ -191,8 +229,28 @@ fi
 
 
 
+
 echo
 echo "===================================================="
-echo "诊断完成:"
+echo "=== 自动寻找关闭状态 CONFIG ==="
+
+
+if [ -f out/.config ]; then
+
+grep \
+  -E \
+  "^# CONFIG_(OPLUS|OPPO|MSM|QCOM|DRM|TOUCH|GAUGE).*is not set" \
+  out/.config \
+  | head -150
+
+fi
+
+
+
+
+echo
+echo "===================================================="
+echo "诊断完成"
+echo "输出文件:"
 echo "${REPORT}"
 echo "===================================================="
