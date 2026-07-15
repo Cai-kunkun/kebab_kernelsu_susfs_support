@@ -57,9 +57,9 @@ jobs:
           libelf-dev \
           python3 \
           rsync \
-          lld \
           clang \
-          llvm
+          llvm \
+          lld
 
 
     - name: Setup ccache
@@ -85,31 +85,48 @@ jobs:
         echo "Commit:"
         git rev-parse HEAD
 
-
         echo "Branch:"
         git branch
 
 
-        echo "========================================"
+        echo ""
+        echo "========== QCOM driver history =========="
 
 
-        echo "Checking smb_charger:"
-        grep -R "struct smb_charger" -n drivers/power/supply/qcom/ || true
+        echo "schgm-flash.c:"
+        git log --oneline -- drivers/power/supply/qcom/schgm-flash.c | head -5 || true
 
 
-        echo "Checking smb_irq_data:"
-        grep -R "struct smb_irq_data" -n drivers/power/supply/qcom/ || true
+        echo ""
+        echo "smb-lib.h:"
+        git log --oneline -- drivers/power/supply/qcom/smb-lib.h | head -5 || true
 
 
-        echo "Checking smblib_read:"
-        grep -R "smblib_read" -n drivers/power/supply/qcom/ || true
+        echo ""
+        echo "========== Symbol check =========="
 
 
-        echo "Checking clang:"
+        echo "smb_charger definition:"
+        grep -n "struct smb_charger {" \
+          drivers/power/supply/qcom/smb-lib.h || true
+
+
+        echo ""
+        echo "smb_irq_data definition:"
+        grep -R "struct smb_irq_data {" \
+          drivers/power/supply/qcom/ || true
+
+
+        echo ""
+        echo "smblib_read:"
+        grep -n "smblib_read" \
+          drivers/power/supply/qcom/smb-lib.h || true
+
+
+        echo ""
+        echo "========== Toolchain =========="
+
         clang --version
-
-
-        echo "Checking ld.lld:"
         ld.lld --version
 
 
@@ -127,7 +144,7 @@ jobs:
 
 
 
-    - name: Check output
+    - name: Check kernel output
       if: always()
       run: |
         ls -lah kernel/out/arch/arm64/boot/ || true
