@@ -25,3 +25,15 @@ CONFIG_OPLUS_FINGERPRINT=y
 # OPLUS touchpanel
 #
 CONFIG_TOUCHPANEL_OPLUS=y
+
+
+#
+# Qualcomm SMEM dependency
+#
+# Required by:
+#   drivers/input/oplus_fp_drivers/oplus_fp_common/
+#
+# Missing header:
+#   soc/qcom/smem.h
+#
+CONFIG_QCOM_SMEM=y
