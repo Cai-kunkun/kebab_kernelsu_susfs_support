@@ -83,13 +83,21 @@ fi
 
 
 # --------------------------------------------------
-# Fix smem header path
+# Fix smem header path and uaccess
 # --------------------------------------------------
 
 echo "=== 修复 smem.h 头文件路径 ==="
 
 if [ -f drivers/input/oplus_fp_drivers/oplus_fp_common/oplus_fp_common.c ]; then
     sed -i 's|<soc/qcom/smem.h>|<linux/soc/qcom/smem.h>|g' drivers/input/oplus_fp_drivers/oplus_fp_common/oplus_fp_common.c
+fi
+
+echo "=== 修复 copy_to_user/copy_from_user 头文件 ==="
+
+if [ -f drivers/input/oplus_fp_drivers/oplus_fp_common/oplus_fp_common.c ]; then
+    if ! grep -q "#include <linux/uaccess.h>" drivers/input/oplus_fp_drivers/oplus_fp_common/oplus_fp_common.c; then
+        sed -i '/#include <linux\/mutex.h>/a #include <linux/uaccess.h>' drivers/input/oplus_fp_drivers/oplus_fp_common/oplus_fp_common.c
+    fi
 fi
 
 
