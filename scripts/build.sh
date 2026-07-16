@@ -90,10 +90,7 @@ echo "=== 修复 OPLUS 指纹驱动头文件 ==="
 
 if [ -f drivers/input/oplus_fp_drivers/oplus_fp_common/oplus_fp_common.c ]; then
     sed -i 's|<soc/qcom/smem.h>|<linux/soc/qcom/smem.h>|g' drivers/input/oplus_fp_drivers/oplus_fp_common/oplus_fp_common.c
-
-    if ! grep -q "#include <linux/uaccess.h>" drivers/input/oplus_fp_drivers/oplus_fp_common/oplus_fp_common.c; then
-        sed -i '/#include <linux\/mutex.h>/a #include <linux/uaccess.h>' drivers/input/oplus_fp_drivers/oplus_fp_common/oplus_fp_common.c
-    fi
+    sed -i '/#include <linux\/mutex.h>/a #include <linux/uaccess.h>' drivers/input/oplus_fp_drivers/oplus_fp_common/oplus_fp_common.c
 fi
 
 

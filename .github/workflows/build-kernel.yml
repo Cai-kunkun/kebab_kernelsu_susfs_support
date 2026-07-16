@@ -42,6 +42,12 @@ jobs:
           ./scripts/diagnose.sh
 
 
+      - name: Copy diagnose report to logs folder
+        if: always()
+        run: |
+          mkdir -p logs
+          cp -f diagnose_report.log logs/ 2>/dev/null || true
+
       - name: Upload diagnose report (before build)
         if: always()
         uses: actions/upload-artifact@v4
@@ -49,6 +55,7 @@ jobs:
           name: diagnose-report
           path: |
             diagnose_report.log
+            logs/diagnose_report.log
           if-no-files-found: warn
 
 
@@ -67,6 +74,12 @@ jobs:
           ./scripts/build.sh
 
 
+      - name: Copy build log to logs folder
+        if: always()
+        run: |
+          mkdir -p logs
+          cp -f build.log logs/ 2>/dev/null || true
+
       - name: Upload build log (always)
         if: always()
         uses: actions/upload-artifact@v4
@@ -74,6 +87,7 @@ jobs:
           name: build-log
           path: |
             build.log
+            logs/build.log
           if-no-files-found: warn
 
 
