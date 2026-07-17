@@ -1,147 +1,24 @@
-  GEN     .version
   CHK     include/generated/compile.h
   AR      built-in.a
+  MODPOST vmlinux.o
+WARNING: modpost: Found 6 section mismatch(es).
+To see full details build your kernel with:
+'make CONFIG_DEBUG_SECTION_MISMATCH=y'
 aarch64-linux-gnu-ld: aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-drivers/power/supply/qcom/qg-util.o: in function `is_input_present':
-qg-util.c:(.text+0x980): multiple definition of `is_input_present'; aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-drivers/power/supply/qcom/fg-util.o:fg-util.c:(.text+0x8f0): first defined here
+techpack/display/msm/sde/sde_crtc.o: in function `sde_crtc_complete_commit':
+sde_crtc.c:(.text+0x1378): undefined reference to `msm_drm_notifier_call_chain'
 aarch64-linux-gnu-ld: aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-techpack/display/msm/sde/sde_kms.o:(__tracepoints+0xf0): multiple definition of `__tracepoint_tracing_mark_write'; aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-drivers/gpu/drm/msm/disp/dpu1/dpu_kms.o:(__tracepoints+0xf0): first defined here
+techpack/display/msm/dsi/dsi_display.o: in function `dsi_display_post_enable':
+(.text+0x9590): undefined reference to `msm_drm_notifier_call_chain'
+aarch64-linux-gnu-ld: techpack/display/msm/dsi/dsi_display.o: in function `dsi_display_disable':
+(.text+0x9948): undefined reference to `msm_drm_notifier_call_chain'
+aarch64-linux-gnu-ld: (.text+0x998c): undefined reference to `msm_drm_notifier_call_chain'
 aarch64-linux-gnu-ld: aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-techpack/display/msm/sde_io_util.o: in function `msm_dss_clk_set_rate':
-(.text+0xb4c): multiple definition of `msm_dss_clk_set_rate'; aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-drivers/gpu/drm/msm/disp/dpu1/dpu_io_util.o:dpu_io_util.c:(.text+0x154): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/sde_io_util.o: in function `msm_dss_enable_clk':
-(.text+0xc3c): multiple definition of `msm_dss_enable_clk'; drivers/gpu/drm/msm/disp/dpu1/dpu_io_util.o:dpu_io_util.c:(.text+0x22c): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/sde_io_util.o: in function `msm_dss_get_clk':
-(.text+0x9b0): multiple definition of `msm_dss_get_clk'; drivers/gpu/drm/msm/disp/dpu1/dpu_io_util.o:dpu_io_util.c:(.text+0x50): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/sde_io_util.o: in function `msm_dss_put_clk':
-(.text+0x960): multiple definition of `msm_dss_put_clk'; drivers/gpu/drm/msm/disp/dpu1/dpu_io_util.o:dpu_io_util.c:(.text+0x0): first defined here
-aarch64-linux-gnu-ld: aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-techpack/display/msm/msm_atomic.o: in function `msm_atomic_prepare_fb':
-msm_atomic.c:(.text+0x778): multiple definition of `msm_atomic_prepare_fb'; aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-drivers/gpu/drm/msm/msm_atomic.o:(.text+0x0): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_atomic.o: in function `msm_atomic_commit_tail':
-msm_atomic.c:(.text+0x10b8): multiple definition of `msm_atomic_commit_tail'; drivers/gpu/drm/msm/msm_atomic.o:(.text+0xc0): first defined here
-aarch64-linux-gnu-ld: aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-techpack/display/msm/msm_fb.o: in function `msm_framebuffer_bo':
-msm_fb.c:(.text+0x200): multiple definition of `msm_framebuffer_bo'; aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-drivers/gpu/drm/msm/msm_fb.o:msm_fb.c:(.text+0x168): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_fb.o: in function `msm_framebuffer_prepare':
-msm_fb.c:(.text+0x28c): multiple definition of `msm_framebuffer_prepare'; drivers/gpu/drm/msm/msm_fb.o:msm_fb.c:(.text+0x0): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_fb.o: in function `msm_framebuffer_cleanup':
-msm_fb.c:(.text+0x438): multiple definition of `msm_framebuffer_cleanup'; drivers/gpu/drm/msm/msm_fb.o:msm_fb.c:(.text+0xd4): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_fb.o: in function `msm_framebuffer_iova':
-msm_fb.c:(.text+0x550): multiple definition of `msm_framebuffer_iova'; drivers/gpu/drm/msm/msm_fb.o:msm_fb.c:(.text+0x124): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_fb.o: in function `msm_framebuffer_format':
-msm_fb.c:(.text+0x62c): multiple definition of `msm_framebuffer_format'; drivers/gpu/drm/msm/msm_fb.o:msm_fb.c:(.text+0x184): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_fb.o: in function `msm_framebuffer_create':
-msm_fb.c:(.text+0x638): multiple definition of `msm_framebuffer_create'; drivers/gpu/drm/msm/msm_fb.o:msm_fb.c:(.text+0x18c): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_fb.o: in function `msm_alloc_stolen_fb':
-msm_fb.c:(.text+0xa4c): multiple definition of `msm_alloc_stolen_fb'; drivers/gpu/drm/msm/msm_fb.o:msm_fb.c:(.text+0x4f4): first defined here
-aarch64-linux-gnu-ld: aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-techpack/display/msm/msm_iommu.o: in function `msm_iommu_new':
-msm_iommu.c:(.text+0x0): multiple definition of `msm_iommu_new'; aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-drivers/gpu/drm/msm/msm_iommu.o:msm_iommu.c:(.text+0x0): first defined here
-aarch64-linux-gnu-ld: aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-techpack/display/msm/msm_drv.o:(.bss+0x1): multiple definition of `dumpstate'; aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-drivers/gpu/drm/msm/msm_drv.o:(.bss+0x0): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_drv.o: in function `msm_clk_bulk_get_clock':
-(.text+0x1b4): multiple definition of `msm_clk_bulk_get_clock'; drivers/gpu/drm/msm/msm_drv.o:msm_drv.c:(.text+0x16c): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_drv.o: in function `msm_writel':
-(.text+0x44c): multiple definition of `msm_writel'; drivers/gpu/drm/msm/msm_drv.o:msm_drv.c:(.text+0x3b0): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_drv.o: in function `msm_clk_get':
-(.text+0x298): multiple definition of `msm_clk_get'; drivers/gpu/drm/msm/msm_drv.o:msm_drv.c:(.text+0x250): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_drv.o: in function `msm_ioremap':
-(.text+0x360): multiple definition of `msm_ioremap'; drivers/gpu/drm/msm/msm_drv.o:msm_drv.c:(.text+0x318): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_drv.o: in function `msm_readl':
-(.text+0x458): multiple definition of `msm_readl'; drivers/gpu/drm/msm/msm_drv.o:msm_drv.c:(.text+0x3bc): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_drv.o: in function `msm_clk_bulk_get':
-(.text+0x48): multiple definition of `msm_clk_bulk_get'; drivers/gpu/drm/msm/msm_drv.o:msm_drv.c:(.text+0x0): first defined here
-aarch64-linux-gnu-ld: aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-techpack/display/msm/msm_gem.o: in function `msm_gem_get_pages':
-msm_gem.c:(.text+0x0): multiple definition of `msm_gem_get_pages'; aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x0): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_put_pages':
-msm_gem.c:(.text+0x288): multiple definition of `msm_gem_put_pages'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x250): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_mmap_obj':
-msm_gem.c:(.text+0x2f0): multiple definition of `msm_gem_mmap_obj'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x254): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_mmap':
-msm_gem.c:(.text+0x3b4): multiple definition of `msm_gem_mmap'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x318): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_fault':
-msm_gem.c:(.text+0x40c): multiple definition of `msm_gem_fault'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x370): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_mmap_offset':
-msm_gem.c:(.text+0x50c): multiple definition of `msm_gem_mmap_offset'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x460): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_get_iova':
-msm_gem.c:(.text+0x61c): multiple definition of `msm_gem_get_iova'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x4e8): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_iova':
-msm_gem.c:(.text+0x9c8): multiple definition of `msm_gem_iova'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x6a0): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_put_iova':
-msm_gem.c:(.text+0xa74): multiple definition of `msm_gem_put_iova'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x74c): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_dumb_create':
-msm_gem.c:(.text+0xca4): multiple definition of `msm_gem_dumb_create'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x750): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_new_handle':
-msm_gem.c:(.text+0xd4c): multiple definition of `msm_gem_new_handle'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x7f8): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_dumb_map_offset':
-msm_gem.c:(.text+0xdb8): multiple definition of `msm_gem_dumb_map_offset'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x864): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_get_vaddr':
-msm_gem.c:(.text+0xe6c): multiple definition of `msm_gem_get_vaddr'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x918): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_get_vaddr_active':
-msm_gem.c:(.text+0xfb0): multiple definition of `msm_gem_get_vaddr_active'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0xa28): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_put_vaddr':
-msm_gem.c:(.text+0xfd0): multiple definition of `msm_gem_put_vaddr'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0xa48): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_madvise':
-msm_gem.c:(.text+0x102c): multiple definition of `msm_gem_madvise'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0xaa4): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_purge':
-msm_gem.c:(.text+0x10b0): multiple definition of `msm_gem_purge'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0xb28): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_vunmap':
-msm_gem.c:(.text+0x1358): multiple definition of `msm_gem_vunmap'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0xe30): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_cpu_prep':
-msm_gem.c:(.text+0x1394): multiple definition of `msm_gem_cpu_prep'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x1108): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_cpu_fini':
-msm_gem.c:(.text+0x1458): multiple definition of `msm_gem_cpu_fini'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x11cc): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_free_object':
-msm_gem.c:(.text+0x1460): multiple definition of `msm_gem_free_object'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x11d4): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_new':
-msm_gem.c:(.text+0x161c): multiple definition of `msm_gem_new'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x142c): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_new_locked':
-msm_gem.c:(.text+0x163c): multiple definition of `msm_gem_new_locked'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x144c): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_import':
-msm_gem.c:(.text+0x1874): multiple definition of `msm_gem_import'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x1688): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_kernel_new':
-msm_gem.c:(.text+0x1b88): multiple definition of `msm_gem_kernel_new'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x1988): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem.o: in function `msm_gem_kernel_new_locked':
-msm_gem.c:(.text+0x1c34): multiple definition of `msm_gem_kernel_new_locked'; drivers/gpu/drm/msm/msm_gem.o:msm_gem.c:(.text+0x1a34): first defined here
-aarch64-linux-gnu-ld: aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-techpack/display/msm/msm_gem_prime.o: in function `msm_gem_prime_get_sg_table':
-msm_gem_prime.c:(.text+0x0): multiple definition of `msm_gem_prime_get_sg_table'; aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-drivers/gpu/drm/msm/msm_gem_prime.o:msm_gem_prime.c:(.text+0x0): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem_prime.o: in function `msm_gem_prime_vmap':
-msm_gem_prime.c:(.text+0x48): multiple definition of `msm_gem_prime_vmap'; drivers/gpu/drm/msm/msm_gem_prime.o:msm_gem_prime.c:(.text+0x48): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem_prime.o: in function `msm_gem_prime_vunmap':
-msm_gem_prime.c:(.text+0x64): multiple definition of `msm_gem_prime_vunmap'; drivers/gpu/drm/msm/msm_gem_prime.o:msm_gem_prime.c:(.text+0x64): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem_prime.o: in function `msm_gem_prime_mmap':
-msm_gem_prime.c:(.text+0x80): multiple definition of `msm_gem_prime_mmap'; drivers/gpu/drm/msm/msm_gem_prime.o:msm_gem_prime.c:(.text+0x80): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem_prime.o: in function `msm_gem_prime_import_sg_table':
-msm_gem_prime.c:(.text+0xc4): multiple definition of `msm_gem_prime_import_sg_table'; drivers/gpu/drm/msm/msm_gem_prime.o:msm_gem_prime.c:(.text+0xc4): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem_prime.o: in function `msm_gem_prime_pin':
-msm_gem_prime.c:(.text+0xe4): multiple definition of `msm_gem_prime_pin'; drivers/gpu/drm/msm/msm_gem_prime.o:msm_gem_prime.c:(.text+0xe4): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem_prime.o: in function `msm_gem_prime_unpin':
-msm_gem_prime.c:(.text+0x114): multiple definition of `msm_gem_prime_unpin'; drivers/gpu/drm/msm/msm_gem_prime.o:msm_gem_prime.c:(.text+0x114): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem_prime.o: in function `msm_gem_prime_res_obj':
-msm_gem_prime.c:(.text+0x13c): multiple definition of `msm_gem_prime_res_obj'; drivers/gpu/drm/msm/msm_gem_prime.o:msm_gem_prime.c:(.text+0x13c): first defined here
-aarch64-linux-gnu-ld: aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-techpack/display/msm/msm_gem_vma.o: in function `msm_gem_address_space_put':
-msm_gem_vma.c:(.text+0xbc): multiple definition of `msm_gem_address_space_put'; aarch64-linux-gnu-ld: DWARF error: invalid or unhandled FORM value: 0x25
-drivers/gpu/drm/msm/msm_gem_vma.o:msm_gem_vma.c:(.text+0x0): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem_vma.o: in function `msm_gem_unmap_vma':
-msm_gem_vma.c:(.text+0x10c): multiple definition of `msm_gem_unmap_vma'; drivers/gpu/drm/msm/msm_gem_vma.o:msm_gem_vma.c:(.text+0x58): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem_vma.o: in function `msm_gem_address_space_create':
-msm_gem_vma.c:(.text+0x138): multiple definition of `msm_gem_address_space_create'; drivers/gpu/drm/msm/msm_gem_vma.o:msm_gem_vma.c:(.text+0x1dc): first defined here
-aarch64-linux-gnu-ld: techpack/display/msm/msm_gem_vma.o: in function `msm_gem_map_vma':
-msm_gem_vma.c:(.text+0x1ec): multiple definition of `msm_gem_map_vma'; drivers/gpu/drm/msm/msm_gem_vma.o:msm_gem_vma.c:(.text+0xf4): first defined here
+techpack/display/oplus/oplus_display_private_api.o: in function `dsi_display_oplus_set_power':
+(.text+0x1740): undefined reference to `msm_drm_notifier_call_chain'
+aarch64-linux-gnu-ld: techpack/display/oplus/oplus_display_private_api.o:(.text+0x17dc): more undefined references to `msm_drm_notifier_call_chain' follow
 make[1]: *** [/home/runner/work/kebab_kernelsu_susfs_support/kebab_kernelsu_susfs_support/kernel_source/Makefile:1218: vmlinux] Error 1
 make[1]: Leaving directory '/home/runner/work/kebab_kernelsu_susfs_support/kebab_kernelsu_susfs_support/kernel_source/out'
 make: *** [Makefile:153: sub-make] Error 2
 Error: Process completed with exit code 2.
+

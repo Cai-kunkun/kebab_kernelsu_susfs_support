@@ -1,0 +1,25 @@
+--- a/techpack/display/msm/msm_drv.c
++++ b/techpack/display/msm/msm_drv.c
+@@ -1,6 +1,22 @@
+ // SPDX-License-Identifier: GPL-2.0-only
+ /* Copyright (c) 2016-2021, The Linux Foundation. All rights reserved. */
+
++#include <linux/notifier.h>
++
++static BLOCKING_NOTIFIER_HEAD(msm_drm_notifier_list);
++
++/**
++ * msm_drm_notifier_call_chain - notify clients of drm_events
++ */
++int msm_drm_notifier_call_chain(unsigned long val, void *v)
++{
++	return blocking_notifier_call_chain(&msm_drm_notifier_list, val, v);
++}
++EXPORT_SYMBOL(msm_drm_notifier_call_chain);
++
++/* Rest of the original file continues below */
++
++
+ #include <linux/kconfig.h>
+ #include <linux/of.h>
+ #include <linux/of_address.h>

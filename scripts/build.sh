@@ -121,8 +121,15 @@ fi
 echo "=== 修复 MSM DRM notifier 符号导出 ==="
 
 if [ -f techpack/display/msm/msm_drv.c ]; then
-    if ! grep -q "int msm_drm_notifier_call_chain" techpack/display/msm/msm_drv.c; then
-        sed -i '/static BLOCKING_NOTIFIER_HEAD(msm_drm_notifier_list);/a \\nint msm_drm_notifier_call_chain(unsigned long val, void *v)\n{\n\treturn blocking_notifier_call_chain(\&msm_drm_notifier_list, val, v);\n}\nEXPORT_SYMBOL(msm_drm_notifier_call_chain);' techpack/display/msm/msm_drv.c
+    if ! grep -q "msm_drm_notifier_call_chain" techpack/display/msm/msm_drv.c; then
+        # 查找文件中是否存在 msm_drm_notifier_list
+        if grep -q "BLOCKING_NOTIFIER_HEAD(msm_drm_notifier_list)" techpack/display/msm/msm_drv.c; then
+            # 如果存在 notifier_list，在其后添加 call_chain 函数
+            sed -i '/BLOCKING_NOTIFIER_HEAD(msm_drm_notifier_list);/a \\nint msm_drm_notifier_call_chain(unsigned long val, void *v)\n{\n\treturn blocking_notifier_call_chain(\&msm_drm_notifier_list, val, v);\n}\nEXPORT_SYMBOL(msm_drm_notifier_call_chain);' techpack/display/msm/msm_drv.c
+        else
+            # 如果不存在，在所有 include 之后添加
+            sed -i '/#include/a \\nstatic BLOCKING_NOTIFIER_HEAD(msm_drm_notifier_list);\n\nint msm_drm_notifier_call_chain(unsigned long val, void *v)\n{\n\treturn blocking_notifier_call_chain(\&msm_drm_notifier_list, val, v);\n}\nEXPORT_SYMBOL(msm_drm_notifier_call_chain);' techpack/display/msm/msm_drv.c | head -1
+        fi
     fi
 fi
 

@@ -5,3 +5,5 @@ logs/build.log
 logs/diagnose_report.log
 claude.txt
 logs/build_optimize.log
+logs/build_optimize.log
+resume_claude_session.sh
