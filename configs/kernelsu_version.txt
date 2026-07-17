@@ -1,8 +1,0 @@
-# KernelSU-Next 版本/分支
-# non-GKI 内核用 legacy 分支(next 分支只支持 GKI)
-KSU_SETUP_URL="https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh"
-KSU_SETUP_BRANCH="legacy"
-
-# 内核 4.19 > 4.14,先尝试 kprobe 方式;如果实机测试 bootloop/su 不生效,
-# 再改成手动 patch 方式(改 fs/exec.c 等),到时候把这个值改成 false
-KSU_USE_KPROBE="true"
