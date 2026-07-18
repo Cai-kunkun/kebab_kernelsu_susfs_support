@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04 # 官方推荐的系统版本
+    runs-on: ubuntu-24.04 # 官方推荐的系统版本
     
     steps:
     # 1. 清理服务器磁盘空间（GitHub 默认服务器空间极小，如果是自托管服务器可删除此步骤）
