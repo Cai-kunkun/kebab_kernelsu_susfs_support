@@ -44,7 +44,7 @@ on:
       apply_kernelsu:
         description: "是否应用 KernelSU-Next 集成脚本"
         type: boolean
-        default: false
+        default: true
       ksu_setup_url:
         description: "KernelSU-Next setup.sh 地址"
         required: false
@@ -225,6 +225,13 @@ jobs:
           CONFIG="./scripts/config --file ${OUT_DIR}/.config"
           if [ "${APPLY_KERNELSU}" = "true" ]; then
             $CONFIG -e KSU
+            # 告诉 KernelSU-Next 我们使用的是手动 hooks（通过 coccinelle 集成的）
+            # 而不是 kprobes，这样 Kbuild 才不会报 "No hooks were defined" 错误
+            $CONFIG -e KSU_MANUAL_HOOKS
+            # 明确禁用 kprobes 相关选项，避免冲突
+            $CONFIG -d KSU_KPROBES_HOOK
+            $CONFIG -d KSU_HOOK_KPROBES
+            $CONFIG -d KSU_WITH_KPROBES
           fi
           if [ "${APPLY_SUSFS}" = "true" ]; then
             $CONFIG -e KSU_SUSFS
