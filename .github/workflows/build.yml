@@ -108,12 +108,11 @@ jobs:
             xsltproc zip zlib1g-dev python3 python-is-python3
 
       - name: 检出内核源码
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.KERNEL_REPO }}
-          ref: ${{ env.KERNEL_BRANCH }}
-          path: kernel
-          fetch-depth: 1
+        # actions/checkout 的 repository 参数只接受 "owner/repo" 格式,不接受完整 URL,
+        # 而 KERNEL_REPO 默认值是完整 URL(方便以后换成别的 git host 上的 fork),
+        # 所以这里直接用 git clone,兼容任意 URL。
+        run: |
+          git clone --depth=1 -b "${KERNEL_BRANCH}" "${KERNEL_REPO}" kernel
 
       - name: 拉取 clang 工具链
         run: |
