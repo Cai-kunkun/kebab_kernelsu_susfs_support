@@ -1,0 +1,55 @@
+--- a/drivers/kernelsu/infra/file_wrapper.c
++++ b/drivers/kernelsu/infra/file_wrapper.c
+@@ -90,6 +90,7 @@ static ssize_t ksu_wrapper_write_iter(struct kiocb *kiocb,
+ 	return ret;
+ }
+
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
+ static int ksu_wrapper_iopoll(struct kiocb *kiocb, struct io_comp_batch *icb,
+ 			      unsigned int v)
+@@ -109,6 +110,7 @@ static int ksu_wrapper_iopoll(struct kiocb *kiocb, bool spin)
+ 	return orig->f_op->iopoll(kiocb, spin);
+ }
+ #endif
++#endif
+
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
+ static int ksu_wrapper_fsync(struct file *file, loff_t start, loff_t end,
+@@ -330,6 +332,7 @@ static long ksu_wrapper_unlocked_ioctl(struct file *filp, unsigned int cmd,
+ // https://cs.android.com/android/kernel/superproject/+/common-android-mainline:common/fs/remap_range.c;l=403-404;drc=398da7defe218d3e51b0f3bdff75147e28125b60
+ // REMAP_FILE_DEDUP: use file_out
+ // https://cs.android.com/android/kernel/superproject/+/common-android-mainline:common/fs/remap_range.c;l=483-484;drc=398da7defe218d3e51b0f3bdff75147e28125b60
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
+ static loff_t ksu_wrapper_remap_file_range(struct file *file_in, loff_t pos_in,
+ 					   struct file *file_out,
+ 					   loff_t pos_out, loff_t len,
+@@ -348,6 +351,7 @@ static loff_t ksu_wrapper_remap_file_range(struct file *file_in, loff_t pos_in,
+ 					    len, remap_flags);
+ 	}
+ }
++#endif
+
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0)
+ static int ksu_wrapper_fop_flush(struct file *file, fl_owner_t id)
+@@ -389,7 +393,9 @@ static inline struct ksu_file_wrapper *ksu_fops_create(struct file *fp)
+ 	p->ops.fsync = fp->f_op->fsync ? ksu_wrapper_fsync : NULL;
+ #endif
+ 	p->ops.fasync = fp->f_op->fasync;
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 16, 0)
+ 	p->ops.iopoll = fp->f_op->iopoll ? ksu_wrapper_iopoll : NULL;
++#endif
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
+ 	p->ops.lock = fp->f_op->lock;
+ 	p->ops.flock = fp->f_op->flock;
+@@ -426,8 +432,10 @@ static inline struct ksu_file_wrapper *ksu_fops_create(struct file *fp)
+ #else
+ 	p->ops.copy_file_range = fp->f_op->copy_file_range;
+ #endif
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0)
+ 	p->ops.remap_file_range =
+ 		fp->f_op->remap_file_range ? ksu_wrapper_remap_file_range : NULL;
++#endif
+ 	p->ops.fadvise = fp->f_op->fadvise;
+
+ #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 6, 0)

@@ -161,6 +161,15 @@ jobs:
         run: |
           curl -LSs "${KSU_SETUP_URL}" | bash -s "${KSU_SETUP_ARG}"
 
+      - name: 修复 KernelSU-Next 4.19 内核兼容性
+        if: ${{ env.APPLY_KERNELSU == 'true' }}
+        working-directory: kernel
+        run: |
+          if [ -f "../ksu_4.19_compat.patch" ]; then
+            patch -p1 < ../ksu_4.19_compat.patch
+            echo "已应用 KernelSU-Next 4.19 兼容性补丁"
+          fi
+
       # SUSFS 自动下载并集成。kernel-4.19 分支在 susfs4ksu 官方仓库确实存在,
       # 但请注意:官方文档里也明确说明非 GKI 内核打这个补丁经常会有 rejected hunks,
       # 需要手动核对/修复冲突(尤其是 struct 里缺 android_kabi_reservedX 占位字段的情况)。
