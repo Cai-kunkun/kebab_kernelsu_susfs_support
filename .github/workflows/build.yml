@@ -98,6 +98,13 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
+      # 这一步之前漏掉了:下面 "修复 KernelSU-Next 4.19 内核兼容性" 那一步要用到
+      # 仓库里的 ksu_4.19_compat.patch 文件,但整个 workflow 之前只 clone 了内核/clang/
+      # susfs4ksu,从没把"当前这个仓库自己"(也就是放这份 .yml 和这个 .patch 文件的仓库)
+      # checkout 下来,所以那个文件路径在 runner 上根本不存在,补丁一直没真正生效过。
+      - name: 检出当前仓库(拿补丁等文件)
+        uses: actions/checkout@v4
+
       - name: 释放磁盘空间
         run: |
           sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost "$AGENT_TOOLSDIRECTORY"
@@ -161,6 +168,24 @@ jobs:
         run: |
           curl -LSs "${KSU_SETUP_URL}" | bash -s "${KSU_SETUP_ARG}"
 
+      # 不同版本/分支的 KernelSU-Next,kprobes hook 相关的 Kconfig 符号名不完全一样
+      # (见过 KSU_KPROBE_HOOKS / KSU_KPROBES_HOOK / KSU_WITH_KPROBES 这几种写法),
+      # scripts/config -e 对不存在的符号名不会报错,只会悄悄不生效。这里直接从刚
+      # 拉下来的 KernelSU-Next 源码里 grep 真实符号名打印出来,后面 config 那一步
+      # 用的名字如果跟这里打印的对不上,就是没生效的原因。
+      - name: 打印 KernelSU-Next 真实 Kconfig 符号名(调试用)
+        if: ${{ env.APPLY_KERNELSU == 'true' }}
+        working-directory: kernel
+        run: |
+          echo "== 搜索 KPROBE/HOOK 相关 Kconfig 符号 =="
+          grep -rn -i "kprobe\|manual_hook" "${KSU_DIR_NAME}"/kernel/Kconfig 2>/dev/null || \
+            grep -rln -i "kprobe\|manual_hook" "${KSU_DIR_NAME}" --include=Kconfig 2>/dev/null || \
+            echo "没找到 Kconfig 文件,请手动确认 ${KSU_DIR_NAME} 目录结构。"
+
+      # 补丁文件名请确保跟仓库里实际提交的文件名一模一样(这里用的是
+      # ksu_4.19_compat.patch,注意是点不是下划线)。上面加的 checkout 步骤会把它
+      # checkout 到 $GITHUB_WORKSPACE 根目录,working-directory 是 kernel,所以这里
+      # 用 ../ksu_4.19_compat.patch 相对路径去找。
       - name: 修复 KernelSU-Next 4.19 内核兼容性
         if: ${{ env.APPLY_KERNELSU == 'true' }}
         working-directory: kernel
@@ -168,6 +193,10 @@ jobs:
           if [ -f "../ksu_4.19_compat.patch" ]; then
             patch -p1 < ../ksu_4.19_compat.patch
             echo "已应用 KernelSU-Next 4.19 兼容性补丁"
+          else
+            echo "⚠️ 没找到 ../ksu_4.19_compat.patch,这个兼容性补丁没有被应用!"
+            echo "请确认该文件已提交到本仓库根目录,且文件名完全一致(区分大小写/标点)。"
+            ls -la ..
           fi
 
       # SUSFS 自动下载并集成。kernel-4.19 分支在 susfs4ksu 官方仓库确实存在,
@@ -261,6 +290,9 @@ jobs:
             $CONFIG --set-str LOCALVERSION "${KERNEL_LOCAL_VERSION}"
           fi
           make O=${OUT_DIR} ARCH=${ARCH} CC=clang olddefconfig
+
+          echo "== 最终生效的 KSU/KPROBES 相关配置(核对有没有被静默丢弃)=="
+          grep -E "CONFIG_KSU|CONFIG_KPROBES|CONFIG_KRETPROBES" ${OUT_DIR}/.config || echo "(没有匹配到任何相关配置项,说明前面 -e/-d 用的符号名可能是错的)"
 
       - name: 编译内核
         working-directory: kernel
