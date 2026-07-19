@@ -121,9 +121,13 @@ jobs:
 
       # uname -r 显示的完整版本号 = Makefile 里的 VERSION.PATCHLEVEL.SUBLEVEL(即 4.19.325,
       # 这三个数字来自源码本身,不建议改) + Makefile 里的 EXTRAVERSION 字段(默认帮你带出了
-      # "-cip132-st16" 这种一大串) + 下面 config 里 CONFIG_LOCALVERSION 追加的部分。
-      # 这里先把 EXTRAVERSION 清空,后面在生成完 defconfig 后把 CONFIG_LOCALVERSION
-      # 设成你自定义的值,两步加起来就等于完全替换掉 4.19.325 后面那一整段。
+      # "-cip132-st16" 这种一大串) + CONFIG_LOCALVERSION 追加的部分 + CONFIG_LOCALVERSION_AUTO
+      # 自动追加的 git hash(格式为 +gxxxxxxx)。
+      #
+      # 要得到 "4.19.325-arrbrants+hash" 这样的效果:
+      # 1. 清空 EXTRAVERSION(去掉 -cip132-st16)
+      # 2. 设置 CONFIG_LOCALVERSION=-arrbrants
+      # 3. 保持 CONFIG_LOCALVERSION_AUTO=y(这样会自动追加 +gxxxxxxx)
       - name: 自定义内核版本号(可选)
         if: ${{ env.KERNEL_LOCAL_VERSION != '' }}
         working-directory: kernel
@@ -215,9 +219,12 @@ jobs:
 
       # defconfig 本身大概率不会带 CONFIG_KSU / CONFIG_KSU_SUSFS,需要在编译前手动打开。
       # KSU_SUSFS_* 各个子功能开关按需增删,这里只启用了最常用的一批。
-      # CONFIG_LOCALVERSION_AUTO 默认是开的,开着的话内核还会自动在版本号后面拼一段
-      # git commit 相关的后缀,所以自定义版本号时要把它关掉,否则你的自定义名称后面
-      # 还会跟一串奇怪的 hash。
+      #
+      # 关于 CONFIG_LOCALVERSION_AUTO:
+      # - 启用时:内核会自动在版本号后面追加 git 信息(+gxxxxxxx 或 +gxxxxxxx-dirty)
+      # - 禁用时:版本号只包含 EXTRAVERSION + CONFIG_LOCALVERSION,不带 git hash
+      # 这里保持 CONFIG_LOCALVERSION_AUTO 启用,这样最终版本号格式为:
+      # 4.19.325-arrbrants+gxxxxxxx (清爽且能追溯 git commit)
       - name: 应用自定义配置(KernelSU-Next / SUSFS / 版本号)
         if: ${{ env.APPLY_KERNELSU == 'true' || env.APPLY_SUSFS == 'true' || env.KERNEL_LOCAL_VERSION != '' }}
         working-directory: kernel
@@ -241,7 +248,8 @@ jobs:
             $CONFIG -e KSU_SUSFS_TRY_UMOUNT
           fi
           if [ -n "${KERNEL_LOCAL_VERSION}" ]; then
-            $CONFIG -d LOCALVERSION_AUTO
+            # 保持 LOCALVERSION_AUTO 启用,这样会自动追加 git hash (+gxxxxxxx)
+            $CONFIG -e LOCALVERSION_AUTO
             $CONFIG --set-str LOCALVERSION "${KERNEL_LOCAL_VERSION}"
           fi
           make O=${OUT_DIR} ARCH=${ARCH} CC=clang olddefconfig
