@@ -110,7 +110,7 @@ jobs:
             git gnupg gperf lib32ncurses5-dev lib32readline-dev lib32z1-dev \
             libelf-dev libssl-dev liblz4-tool libncurses5-dev libsdl1.2-dev \
             libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools \
-            xsltproc zip zlib1g-dev python3 python-is-python3
+            xsltproc zip zlib1g-dev python3 python-is-python3 coccinelle
 
       - name: 检出内核源码
         # actions/checkout 的 repository 参数只接受 "owner/repo" 格式,不接受完整 URL,
@@ -142,6 +142,23 @@ jobs:
           ccache -M 5G
           echo "USE_CCACHE=1" >> "$GITHUB_ENV"
           echo "CCACHE_EXEC=$(command -v ccache)" >> "$GITHUB_ENV"
+
+      # 报错 "No hooks were defined, please integrate manual hooks in your kernel!"
+      # 是因为 legacy 分支的 KernelSU-Next 不走 kprobe 自动 hook,必须手动在
+      # fs/exec.c / fs/open.c / fs/read_write.c / fs/stat.c 里插入调用 KernelSU 钩子函数
+      # 的代码,官方文档里那几个 diff 是针对特定内核版本写的,直接怼上去大概率跟你
+      # 这颗 4.19 内核对不上,会跟前面 susfs 补丁一样出现 rejected hunks。
+      # 这里改用 devnoname120/kernelsu-coccinelle 这个项目:它用 Coccinelle(语义补丁,
+      # 按代码结构匹配而不是逐行 diff)来打这几个 hook,兼容 3.18~5.15 内核,不挑
+      # 具体版本、注释、变量名这些细节,基本不会有 rejected hunks 的问题。
+      # 官方 README 特别强调:必须在"干净"的内核源码上打(不能已经打过 KernelSU/susfs
+      # 补丁),所以这一步必须放在 setup.sh 和 SUSFS 补丁之前。
+      - name: 应用 KernelSU 底层 syscall hook(coccinelle,可选)
+        if: ${{ env.APPLY_KERNELSU == 'true' }}
+        run: |
+          git clone --depth=1 https://github.com/devnoname120/kernelsu-coccinelle.git
+          cd kernelsu-coccinelle/classic-hooks
+          ./apply.sh ../../kernel
 
       - name: 应用 KernelSU-Next(可选)
         if: ${{ env.APPLY_KERNELSU == 'true' }}
