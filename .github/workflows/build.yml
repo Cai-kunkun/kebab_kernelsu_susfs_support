@@ -1,4 +1,3 @@
-
 name: Build kebab kernel
 
 on:
@@ -22,6 +21,36 @@ on:
         description: "自定义内核版本后缀,带前导 -,比如填 -MyKernel 会让 uname -r 显示成 4.19.325-MyKernel(会清空原本 cip132-st16-perf 那一长串);留空则保留仓库原本的版本字符串"
         required: false
         default: ""
+      enable_ksu_next:
+        description: "是否集成 KernelSU-Next"
+        required: true
+        type: boolean
+        default: true
+      hook_mode:
+        description: "Hook 方式:kprobe(推荐,4.19 内核大概率能用)/ manual(确认 kprobe 在本机坏了才用,4.19 上官方 legacy 分支有已知编译坑)"
+        required: true
+        type: choice
+        options:
+          - kprobe
+          - manual
+        default: kprobe
+      ksu_next_ref:
+        description: "hook_mode=kprobe 时,KernelSU-Next setup.sh 的参数:next / dev / stable,或指定 tag(比如 v3.0.0)"
+        required: false
+        default: "next"
+      ksu_manual_repo:
+        description: "hook_mode=manual 时使用的源码仓库(默认社区已在 4.19 上验证过的整合分支,而非官方 legacy 分支)"
+        required: false
+        default: "https://github.com/wshamroukh/KernelSU-Next-SUSFS-kernelv4.19"
+      ksu_manual_branch:
+        description: "hook_mode=manual 时使用的分支"
+        required: false
+        default: "legacy"
+      kprobe_test_mode:
+        description: "诊断用:hook_mode=kprobe 时,注释掉 hook 初始化后编译一份'裸内核'。刷入后如果设备能正常开机,说明 kprobe 在本机是坏的,应改用 manual;如果开机异常则说明 kprobe 正常,保持默认即可。仅用于测试,不要日常使用这个开关编出来的产物。"
+        required: true
+        type: boolean
+        default: false
 
 env:
   ARCH: arm64
@@ -33,6 +62,13 @@ env:
   KERNEL_BRANCH: ${{ github.event.inputs.kernel_branch || 'lineage-23.2' }}
   DEFCONFIG: ${{ github.event.inputs.defconfig || 'vendor/kona-perf_defconfig vendor/oplus.config' }}
   KERNEL_LOCAL_VERSION: ${{ github.event.inputs.kernel_local_version || '' }}
+  ENABLE_KSU_NEXT: ${{ github.event.inputs.enable_ksu_next || 'true' }}
+  HOOK_MODE: ${{ github.event.inputs.hook_mode || 'kprobe' }}
+  KSU_NEXT_REF: ${{ github.event.inputs.ksu_next_ref || 'next' }}
+  KSU_MANUAL_REPO: ${{ github.event.inputs.ksu_manual_repo || 'https://github.com/wshamroukh/KernelSU-Next-SUSFS-kernelv4.19' }}
+  KSU_MANUAL_BRANCH: ${{ github.event.inputs.ksu_manual_branch || 'legacy' }}
+  KPROBE_TEST_MODE: ${{ github.event.inputs.kprobe_test_mode || 'false' }}
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
 
 jobs:
   build:
@@ -55,6 +91,23 @@ jobs:
             libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools \
             xsltproc zip zlib1g-dev python3 python-is-python3 coccinelle
 
+      - name: 缓存 ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ runner.os }}-${{ env.KERNEL_REPO }}-${{ env.KERNEL_BRANCH }}-${{ env.DEFCONFIG }}-${{ env.HOOK_MODE }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ env.KERNEL_REPO }}-${{ env.KERNEL_BRANCH }}-${{ env.DEFCONFIG }}-${{ env.HOOK_MODE }}-
+            ccache-${{ runner.os }}-${{ env.KERNEL_REPO }}-${{ env.KERNEL_BRANCH }}-
+            ccache-${{ runner.os }}-
+
+      - name: 缓存 clang 工具链
+        id: cache-clang
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CLANG_DIR }}
+          key: clang-${{ env.CLANG_REPO }}-${{ env.CLANG_BRANCH }}
+
       - name: 检出内核源码
         run: |
           git clone --depth=1 -b "${KERNEL_BRANCH}" "${KERNEL_REPO}" kernel
@@ -66,14 +119,52 @@ jobs:
           sed -i 's/^EXTRAVERSION =.*/EXTRAVERSION =/' Makefile
           grep '^EXTRAVERSION' Makefile
 
+      # ---- 集成 KernelSU-Next ----
+      - name: 集成 KernelSU-Next
+        if: ${{ env.ENABLE_KSU_NEXT == 'true' }}
+        working-directory: kernel
+        run: |
+          if [ "${HOOK_MODE}" = "manual" ]; then
+            echo "manual 模式:直接把社区整合好的驱动源码放进 drivers/kernelsu"
+            echo "(官方 setup.sh legacy 分支在部分 4.19 内核上有已知 LSM hook 编译报错,不用它)"
+            git clone --depth=1 -b "${KSU_MANUAL_BRANCH}" "${KSU_MANUAL_REPO}" drivers/kernelsu
+
+            grep -q 'source "drivers/kernelsu/Kconfig"' drivers/Kconfig || \
+              sed -i '/^endmenu/i source "drivers/kernelsu/Kconfig"' drivers/Kconfig
+            grep -q 'kernelsu/' drivers/Makefile || \
+              echo 'obj-$(CONFIG_KSU) += kernelsu/' >> drivers/Makefile
+          else
+            echo "kprobe 模式:走官方 setup.sh,参数 = ${KSU_NEXT_REF}"
+            curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s "${KSU_NEXT_REF}"
+          fi
+
+      # ---- 诊断:测试 kprobe 是否在本机内核可用 ----
+      - name: 诊断模式:注释掉 kprobe hook 初始化
+        if: ${{ env.ENABLE_KSU_NEXT == 'true' && env.HOOK_MODE == 'kprobe' && env.KPROBE_TEST_MODE == 'true' }}
+        working-directory: kernel
+        run: |
+          FILE=$(grep -rl "ksu_sucompat_init" --include=*.c . | head -n1)
+          if [ -z "$FILE" ]; then
+            echo "::error::没找到 ksu_sucompat_init 调用点,KernelSU-Next 版本可能变了实现方式,需要手动确认后再测试"
+            exit 1
+          fi
+          echo "将在 $FILE 里注释掉 ksu_sucompat_init() / ksu_ksud_init() 调用"
+          sed -i -E 's/^([[:space:]]*)(ksu_sucompat_init\(\);)/\1\/\/\2/' "$FILE"
+          sed -i -E 's/^([[:space:]]*)(ksu_ksud_init\(\);)/\1\/\/\2/' "$FILE"
+          grep -n "ksu_sucompat_init\|ksu_ksud_init" "$FILE"
+          echo "::notice::这次产物用于测试:刷入后如果能正常开机,说明 kprobe 在本机是坏的,应改用 hook_mode=manual;如果开机异常,说明 kprobe 正常,后续正常构建把这个开关关掉即可"
+
       - name: 拉取 clang 工具链
+        if: steps.cache-clang.outputs.cache-hit != 'true'
         run: |
           git clone --depth=1 -b "${CLANG_BRANCH}" "${CLANG_REPO}" "${CLANG_DIR}"
+
+      - name: 添加 clang 到 PATH
+        run: |
           echo "$(pwd)/${CLANG_DIR}/bin" >> "$GITHUB_PATH"
 
       - name: 启用 ccache
         run: |
-          sudo apt-get install -y ccache
           ccache -M 5G
           echo "USE_CCACHE=1" >> "$GITHUB_ENV"
           echo "CCACHE_EXEC=$(command -v ccache)" >> "$GITHUB_ENV"
@@ -83,13 +174,32 @@ jobs:
         run: |
           make O=${OUT_DIR} ARCH=${ARCH} CC=clang ${DEFCONFIG}
 
-      - name: 应用自定义配置(版本号)
-        if: ${{ env.KERNEL_LOCAL_VERSION != '' }}
+      - name: 应用自定义配置(版本号 / KernelSU-Next)
+        if: ${{ env.KERNEL_LOCAL_VERSION != '' || env.ENABLE_KSU_NEXT == 'true' }}
         working-directory: kernel
         run: |
           CONFIG="./scripts/config --file ${OUT_DIR}/.config"
-          $CONFIG -e LOCALVERSION_AUTO
-          $CONFIG --set-str LOCALVERSION "${KERNEL_LOCAL_VERSION}"
+
+          if [ -n "${KERNEL_LOCAL_VERSION}" ]; then
+            $CONFIG -e LOCALVERSION_AUTO
+            $CONFIG --set-str LOCALVERSION "${KERNEL_LOCAL_VERSION}"
+          fi
+
+          if [ "${ENABLE_KSU_NEXT}" = "true" ]; then
+            $CONFIG -e KSU
+            $CONFIG -e OVERLAY_FS
+            $CONFIG -e MODULES
+            $CONFIG -e MODULE_UNLOAD
+
+            if [ "${HOOK_MODE}" = "manual" ]; then
+              $CONFIG -e KSU_MANUAL_HOOK
+            else
+              $CONFIG -e KPROBES
+              $CONFIG -e HAVE_KPROBES
+              $CONFIG -e KPROBE_EVENTS
+            fi
+          fi
+
           make O=${OUT_DIR} ARCH=${ARCH} CC=clang olddefconfig
 
       - name: 编译内核
