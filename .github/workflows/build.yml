@@ -26,28 +26,33 @@ on:
         required: true
         type: boolean
         default: true
+      ksu_source:
+        description: "KernelSU-Next 源码来源:official_stable(官方最新 stable tag,推荐先试)/ official_dev(官方 dev 分支,较新可能对老内核不兼容)/ community_419(社区 4.19 专用整合 fork)"
+        required: true
+        type: choice
+        options:
+          - official_stable
+          - official_dev
+          - community_419
+        default: official_stable
+      ksu_community_repo:
+        description: "ksu_source=community_419 时使用的仓库地址"
+        required: false
+        default: "https://github.com/wshamroukh/KernelSU-Next-SUSFS-kernelv4.19"
+      ksu_community_branch:
+        description: "ksu_source=community_419 时使用的分支"
+        required: false
+        default: "legacy"
       hook_mode:
-        description: "Hook 方式:kprobe(推荐,4.19 内核大概率能用)/ manual(确认 kprobe 在本机坏了才用,4.19 上官方 legacy 分支有已知编译坑)"
+        description: "Hook 方式:kprobe(推荐先试,4.19 内核大概率能用)/ manual(确认 kprobe 在本机坏了才用)"
         required: true
         type: choice
         options:
           - kprobe
           - manual
         default: kprobe
-      ksu_next_ref:
-        description: "hook_mode=kprobe 时,KernelSU-Next setup.sh 的参数:next / dev / stable,或指定 tag(比如 v3.0.0)"
-        required: false
-        default: "next"
-      ksu_manual_repo:
-        description: "hook_mode=manual 时使用的源码仓库(默认社区已在 4.19 上验证过的整合分支,而非官方 legacy 分支)"
-        required: false
-        default: "https://github.com/wshamroukh/KernelSU-Next-SUSFS-kernelv4.19"
-      ksu_manual_branch:
-        description: "hook_mode=manual 时使用的分支"
-        required: false
-        default: "legacy"
       kprobe_test_mode:
-        description: "诊断用:hook_mode=kprobe 时,注释掉 hook 初始化后编译一份'裸内核'。刷入后如果设备能正常开机,说明 kprobe 在本机是坏的,应改用 manual;如果开机异常则说明 kprobe 正常,保持默认即可。仅用于测试,不要日常使用这个开关编出来的产物。"
+        description: "诊断用:hook_mode=kprobe 时,注释掉 hook 初始化后编一份'裸内核'。刷入后设备能正常开机说明 kprobe 坏了应改用 manual;开机异常说明 kprobe 正常。仅用于测试,不要日常使用这个开关编出来的产物。"
         required: true
         type: boolean
         default: false
@@ -63,10 +68,10 @@ env:
   DEFCONFIG: ${{ github.event.inputs.defconfig || 'vendor/kona-perf_defconfig vendor/oplus.config' }}
   KERNEL_LOCAL_VERSION: ${{ github.event.inputs.kernel_local_version || '' }}
   ENABLE_KSU_NEXT: ${{ github.event.inputs.enable_ksu_next || 'true' }}
+  KSU_SOURCE: ${{ github.event.inputs.ksu_source || 'official_stable' }}
+  KSU_COMMUNITY_REPO: ${{ github.event.inputs.ksu_community_repo || 'https://github.com/wshamroukh/KernelSU-Next-SUSFS-kernelv4.19' }}
+  KSU_COMMUNITY_BRANCH: ${{ github.event.inputs.ksu_community_branch || 'legacy' }}
   HOOK_MODE: ${{ github.event.inputs.hook_mode || 'kprobe' }}
-  KSU_NEXT_REF: ${{ github.event.inputs.ksu_next_ref || 'next' }}
-  KSU_MANUAL_REPO: ${{ github.event.inputs.ksu_manual_repo || 'https://github.com/wshamroukh/KernelSU-Next-SUSFS-kernelv4.19' }}
-  KSU_MANUAL_BRANCH: ${{ github.event.inputs.ksu_manual_branch || 'legacy' }}
   KPROBE_TEST_MODE: ${{ github.event.inputs.kprobe_test_mode || 'false' }}
   CCACHE_DIR: ${{ github.workspace }}/.ccache
 
@@ -95,9 +100,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.CCACHE_DIR }}
-          key: ccache-${{ runner.os }}-${{ env.KERNEL_REPO }}-${{ env.KERNEL_BRANCH }}-${{ env.DEFCONFIG }}-${{ env.HOOK_MODE }}-${{ github.run_id }}
+          key: ccache-${{ runner.os }}-${{ env.KERNEL_REPO }}-${{ env.KERNEL_BRANCH }}-${{ env.DEFCONFIG }}-${{ env.KSU_SOURCE }}-${{ env.HOOK_MODE }}-${{ github.run_id }}
           restore-keys: |
-            ccache-${{ runner.os }}-${{ env.KERNEL_REPO }}-${{ env.KERNEL_BRANCH }}-${{ env.DEFCONFIG }}-${{ env.HOOK_MODE }}-
+            ccache-${{ runner.os }}-${{ env.KERNEL_REPO }}-${{ env.KERNEL_BRANCH }}-${{ env.DEFCONFIG }}-${{ env.KSU_SOURCE }}-${{ env.HOOK_MODE }}-
+            ccache-${{ runner.os }}-${{ env.KERNEL_REPO }}-${{ env.KERNEL_BRANCH }}-${{ env.DEFCONFIG }}-
             ccache-${{ runner.os }}-${{ env.KERNEL_REPO }}-${{ env.KERNEL_BRANCH }}-
             ccache-${{ runner.os }}-
 
@@ -124,19 +130,25 @@ jobs:
         if: ${{ env.ENABLE_KSU_NEXT == 'true' }}
         working-directory: kernel
         run: |
-          if [ "${HOOK_MODE}" = "manual" ]; then
-            echo "manual 模式:直接把社区整合好的驱动源码放进 drivers/kernelsu"
-            echo "(官方 setup.sh legacy 分支在部分 4.19 内核上有已知 LSM hook 编译报错,不用它)"
-            git clone --depth=1 -b "${KSU_MANUAL_BRANCH}" "${KSU_MANUAL_REPO}" drivers/kernelsu
+          case "${KSU_SOURCE}" in
+            community_419)
+              echo "使用社区 4.19 专用整合 fork: ${KSU_COMMUNITY_REPO}@${KSU_COMMUNITY_BRANCH}"
+              git clone --depth=1 -b "${KSU_COMMUNITY_BRANCH}" "${KSU_COMMUNITY_REPO}" drivers/kernelsu
 
-            grep -q 'source "drivers/kernelsu/Kconfig"' drivers/Kconfig || \
-              sed -i '/^endmenu/i source "drivers/kernelsu/Kconfig"' drivers/Kconfig
-            grep -q 'kernelsu/' drivers/Makefile || \
-              echo 'obj-$(CONFIG_KSU) += kernelsu/' >> drivers/Makefile
-          else
-            echo "kprobe 模式:走官方 setup.sh,参数 = ${KSU_NEXT_REF}"
-            curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s "${KSU_NEXT_REF}"
-          fi
+              grep -q 'source "drivers/kernelsu/Kconfig"' drivers/Kconfig || \
+                sed -i '/^endmenu/i source "drivers/kernelsu/Kconfig"' drivers/Kconfig
+              grep -q 'kernelsu/' drivers/Makefile || \
+                echo 'obj-$(CONFIG_KSU) += kernelsu/' >> drivers/Makefile
+              ;;
+            official_dev)
+              echo "官方 dev 分支(较新,如遇编译报错请改用 official_stable 或 community_419)"
+              curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s dev
+              ;;
+            *)
+              echo "官方最新 stable tag"
+              curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s stable
+              ;;
+          esac
 
       # ---- 诊断:测试 kprobe 是否在本机内核可用 ----
       - name: 诊断模式:注释掉 kprobe hook 初始化
@@ -152,7 +164,7 @@ jobs:
           sed -i -E 's/^([[:space:]]*)(ksu_sucompat_init\(\);)/\1\/\/\2/' "$FILE"
           sed -i -E 's/^([[:space:]]*)(ksu_ksud_init\(\);)/\1\/\/\2/' "$FILE"
           grep -n "ksu_sucompat_init\|ksu_ksud_init" "$FILE"
-          echo "::notice::这次产物用于测试:刷入后如果能正常开机,说明 kprobe 在本机是坏的,应改用 hook_mode=manual;如果开机异常,说明 kprobe 正常,后续正常构建把这个开关关掉即可"
+          echo "::notice::这次产物用于测试:刷入后能正常开机说明 kprobe 在本机是坏的,应改用 hook_mode=manual;开机异常说明 kprobe 正常,后续正常构建把这个开关关掉即可"
 
       - name: 拉取 clang 工具链
         if: steps.cache-clang.outputs.cache-hit != 'true'
