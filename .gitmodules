@@ -1,0 +1,8 @@
+[submodule "kernel/toolchain/gcc32"]
+	path = kernel/toolchain/gcc32
+	url = https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9.git
+	branch = lineage-19.1
+[submodule "kernel/toolchain/gcc"]
+	path = kernel/toolchain/gcc
+	url = https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9.git
+	branch = lineage-19.1
